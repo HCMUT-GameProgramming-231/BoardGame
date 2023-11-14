@@ -108,9 +108,6 @@ bool AppDelegate::applicationDidFinishLaunching() {
 
     // run
     director->runWithScene(Menu);
-   
-    
-    log("%s %i", "Logging number: ", 1);
     
 
     return true;

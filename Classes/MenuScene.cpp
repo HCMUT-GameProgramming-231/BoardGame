@@ -1,83 +1,66 @@
-/****************************************************************************
- Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
- 
- http://www.cocos2d-x.org
- 
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
- 
- The above copyright notice and this permission notice shall be included in
- all copies or substantial portions of the Software.
- 
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- THE SOFTWARE.
- ****************************************************************************/
-
 #include "MenuScene.h"
-#include "Game2P.h"
-#include "Game3P.h"
 
 USING_NS_CC;
 
 Scene* MenuScene::createScene()
 {
-    return MenuScene::create();
-}
+	// 'scene' is an autorelease object
+	auto scene = MenuScene::create();
 
-// Print useful error message instead of segfaulting when files are not there.
-static void problemLoading(const char* filename)
-{
-    printf("Error while loading: %s\n", filename);
-    printf("Depending on how you compiled you might have to add 'Resources/' in front of filenames in MenuSceneScene.cpp\n");
+	// return the scene
+	return scene;
 }
 
 // on "init" you need to initialize your instance
 bool MenuScene::init()
 {
-    //////////////////////////////
-    // 1. super init first
+	//////////////////////////////
+	// 1. super init first
+	if (!Scene::init())
+	{
+		return false;
+	}
 
-    auto bg = MenuLayer::createLayer();
+	Size visibleSize = Director::getInstance()->getVisibleSize();
+	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
-    if (!Scene::init())
-    {
-        return false;
-    }
+	// connect to server
+	_client = SocketIO::connect("http://127.0.0.1:3200", *this);
 
-    this->addChild(bg);
-    auto logo = Sprite::create("Assets/MenuScene/HelloWorld.png");
-    logo->setPosition(300, 300);
-    this->addChild(logo);
+	_client->on("message", CC_CALLBACK_2(MenuScene::onReceiveEvent, this));
+	auto mouseEv = EventListenerMouse::create();
+	mouseEv->onMouseDown = [&](EventMouse* ev) {
+		auto btn = ev->getMouseButton();
+		switch (btn)
+		{
+		case cocos2d::EventMouse::MouseButton::BUTTON_LEFT:
+			_client->emit("message", "hello");
+			break;
+		default:
+			break;
+		}
+	};
 
-    auto MouseEv = EventListenerMouse::create();
-    MouseEv->onMouseDown = [](Event* e) {
-        
-    };
-    _eventDispatcher->addEventListenerWithSceneGraphPriority(MouseEv, this);
-    
-    
-    return true;
+	_eventDispatcher->addEventListenerWithSceneGraphPriority(mouseEv, this);
+	if (_client == nullptr) log("failed");
+	else log("success");
+	return true;
 }
 
-LayerColor* MenuLayer::createLayer()
-{
-    return MenuLayer::create();
+void MenuScene::onConnect(SIOClient* client) {
+	// SocketIO::connect success
+}
+void MenuScene::onMessage(SIOClient* client, const std::string& data) {
+	// SocketIO::receive
+	log("%s",data.c_str());
+}
+void MenuScene::onClose(SIOClient* client) {
+	// SocketIO::disconnect success
+}
+void MenuScene::onError(SIOClient* client, const std::string& data) {
+	// SocketIO::failed
 }
 
-bool MenuLayer::init()
-{
-    if (!LayerColor::initWithColor(Color4B(255, 255, 255, 255)))
-    {
-        return false;
-    }
-    return true;
-}
+void MenuScene::onReceiveEvent(SIOClient* client, const std::string& data) {
+	
+};
