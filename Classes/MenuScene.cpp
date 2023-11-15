@@ -21,6 +21,8 @@ bool MenuScene::init()
 		return false;
 	}
 
+	this->AI_mode = "Easy";
+
 	Size visibleSize = Director::getInstance()->getVisibleSize();
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
@@ -33,13 +35,21 @@ bool MenuScene::init()
 	// connect to server
 	//_client = SocketIO::connect("192.168.1.8:3200", *this);
 	
-	//1v1 btn
-	auto _1v1_btn = Label::createWithTTF("1vs1", "fonts/arial.ttf", 40);
-	_1v1_btn->setTextColor(Color4B(255, 0, 0, 255));
-	_1v1_btn->setPosition(130, 250);
-	this->addChild(_1v1_btn);
-	_1v1_btn->enableShadow();
-	auto _1v1_btn_rect = _1v1_btn->getBoundingBox();
+	//1v1 btn (AI)
+	auto _1v1_AI_btn = Label::createWithTTF("1vs1 (AI)", "fonts/arial.ttf", 40);
+	_1v1_AI_btn->setTextColor(Color4B(255, 0, 0, 255));
+	_1v1_AI_btn->setPosition(130, 300);
+	this->addChild(_1v1_AI_btn);
+	_1v1_AI_btn->enableShadow();
+	auto _1v1_AI_btn_rect = _1v1_AI_btn->getBoundingBox();
+
+	//1v1 (pvp)
+	auto _1v1_PVP_btn = Label::createWithTTF("1vs1 (PvP)", "fonts/arial.ttf", 40);
+	_1v1_PVP_btn->setTextColor(Color4B(255, 0, 0, 255));
+	_1v1_PVP_btn->setPosition(130, 250);
+	this->addChild(_1v1_PVP_btn);
+	_1v1_PVP_btn->enableShadow();
+	auto _1v1_PVP_btn_rect = _1v1_PVP_btn->getBoundingBox();
 
 	//1v1vPC btn
 	auto _1v1vPC_btn = Label::createWithTTF("1vs1vsPC", "fonts/arial.ttf", 40);
@@ -58,10 +68,18 @@ bool MenuScene::init()
 	how_to_play_btn->enableShadow();
 	auto how_to_play_btn_rect = how_to_play_btn->getBoundingBox();
 
+	//setting btn
+	auto setting_btn = Label::createWithTTF("Setting", "fonts/arial.ttf", 40);
+	setting_btn->setTextColor(Color4B(255, 0, 0, 255));
+	setting_btn->setPosition(130, 100);
+	this->addChild(setting_btn);
+	setting_btn->enableShadow();
+	auto setting_btn_rect = setting_btn->getBoundingBox();
+
 	//exit btn
 	auto exit_btn = Label::createWithTTF("Exit", "fonts/arial.ttf", 40);
 	exit_btn->setTextColor(Color4B(255, 0, 0, 255));
-	exit_btn->setPosition(130, 100);
+	exit_btn->setPosition(130, 50);
 	this->addChild(exit_btn);
 	exit_btn->enableShadow();
 	auto exit_btn_rect = exit_btn->getBoundingBox();
@@ -71,57 +89,90 @@ bool MenuScene::init()
 	auto MouseEv = EventListenerMouse::create();
 
 	//check if mouse is hovering on any button
-	MouseEv->onMouseMove = [&, _1v1_btn_rect, _1v1_btn, _1v1vPC_btn_rect, _1v1vPC_btn,
-								how_to_play_btn_rect, how_to_play_btn,
-									exit_btn_rect, exit_btn](EventMouse* event)
+	MouseEv->onMouseMove = [&, _1v1_AI_btn_rect, _1v1_AI_btn, _1v1vPC_btn_rect, _1v1vPC_btn,
+								_1v1_PVP_btn_rect, _1v1_PVP_btn,
+									how_to_play_btn_rect, how_to_play_btn,
+										setting_btn_rect, setting_btn,
+											exit_btn_rect, exit_btn](EventMouse* event)
 	{
 		auto MousePos = Vec2(event->getCursorX(), event->getCursorY());
-		if (_1v1_btn_rect.containsPoint(MousePos))
+		if (_1v1_AI_btn_rect.containsPoint(MousePos))
 		{
-			_1v1_btn->disableEffect();
+			_1v1_AI_btn->disableEffect();
+			_1v1_PVP_btn->enableShadow();
 			_1v1vPC_btn->enableShadow();
 			how_to_play_btn->enableShadow();
+			setting_btn->enableShadow();
+			exit_btn->enableShadow();
+		}
+		else if (_1v1_PVP_btn_rect.containsPoint(MousePos))
+		{
+			_1v1_AI_btn->enableShadow();
+			_1v1_PVP_btn->disableEffect();
+			_1v1vPC_btn->enableShadow();
+			how_to_play_btn->enableShadow();
+			setting_btn->enableShadow();
 			exit_btn->enableShadow();
 		}
 		else if (_1v1vPC_btn_rect.containsPoint(MousePos))
 		{
-			_1v1_btn->enableShadow();
+			_1v1_AI_btn->enableShadow();
+			_1v1_PVP_btn->enableShadow();
 			_1v1vPC_btn->disableEffect();
 			how_to_play_btn->enableShadow();
+			setting_btn->enableShadow();
 			exit_btn->enableShadow();
 		}
 		else if (how_to_play_btn_rect.containsPoint(MousePos))
 		{
-			_1v1_btn->enableShadow();
+			_1v1_AI_btn->enableShadow();
+			_1v1_PVP_btn->enableShadow();
 			_1v1vPC_btn->enableShadow();
 			how_to_play_btn->disableEffect();
+			setting_btn->enableShadow();
+			exit_btn->enableShadow();
+		}
+		else if (setting_btn_rect.containsPoint(MousePos))
+		{
+			_1v1_AI_btn->enableShadow();
+			_1v1_PVP_btn->enableShadow();
+			_1v1vPC_btn->enableShadow();
+			how_to_play_btn->enableShadow();
+			setting_btn->disableEffect();
 			exit_btn->enableShadow();
 		}
 		else if (exit_btn_rect.containsPoint(MousePos))
 		{
-			_1v1_btn->enableShadow();
+			_1v1_AI_btn->enableShadow();
+			_1v1_PVP_btn->enableShadow();
 			_1v1vPC_btn->enableShadow();
 			how_to_play_btn->enableShadow();
+			setting_btn->enableShadow();
 			exit_btn->disableEffect();
 		}
 		else
 		{
-			_1v1_btn->enableShadow();
+			_1v1_AI_btn->enableShadow();
+			_1v1_PVP_btn->enableShadow();
 			_1v1vPC_btn->enableShadow();
 			how_to_play_btn->enableShadow();
+			setting_btn->enableShadow();
 			exit_btn->enableShadow();
 		}
 	};
 
 	//check which btn is clicked
-	MouseEv->onMouseDown = [&, _1v1_btn_rect, _1v1_btn, _1v1vPC_btn_rect, _1v1vPC_btn,
-								how_to_play_btn_rect, how_to_play_btn,
-									exit_btn_rect, exit_btn](EventMouse* event)
+	MouseEv->onMouseDown = [&, _1v1_AI_btn_rect, _1v1vPC_btn_rect, _1v1_PVP_btn_rect,
+								how_to_play_btn_rect, setting_btn_rect, exit_btn_rect](EventMouse* event)
 	{
 		auto MousePos = Vec2(event->getCursorX(), event->getCursorY());
-		if (_1v1_btn_rect.containsPoint(MousePos))
+		if (_1v1_AI_btn_rect.containsPoint(MousePos))
 		{
-			log("1 vs 1 button pressed");
+			log("1 vs 1 AI button pressed");
+		}
+		else if (_1v1_PVP_btn_rect.containsPoint(MousePos))
+		{
+			log("1 vs 1 PVP button pressed");
 		}
 		else if (_1v1vPC_btn_rect.containsPoint(MousePos))
 		{
@@ -130,6 +181,10 @@ bool MenuScene::init()
 		else if (how_to_play_btn_rect.containsPoint(MousePos))
 		{
 			log("How to play button pressed");
+		}
+		else if (setting_btn_rect.containsPoint(MousePos))
+		{
+			log("Setting button pressed");
 		}
 		else if (exit_btn_rect.containsPoint(MousePos))
 		{

@@ -27,6 +27,7 @@ public:
 	CREATE_FUNC(MenuScene);
 
 private:
+	std::string AI_mode;
 	SIOClient* _client;
 };
 
