@@ -18,8 +18,6 @@ public:
 	virtual bool init();
 
 
-	// socket.io even\vent listener
-	void onReceiveEvent(SIOClient* client, const std::string& data);
 	// SIODelegate
 	virtual void onConnect(SIOClient* client);
 	virtual void onMessage(SIOClient* client, const std::string& data);
