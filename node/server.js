@@ -1,25 +1,27 @@
 const { Server } = require("socket.io");
 
+
+var OnlineUser = [];
+var Match = [];
 //server = http.createServer().listen(8000);
 const io = new Server(3200, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-    credentials: true,
-  }, 
-  allowEIO3:true,
+  allowEIO3: true,
 });
 
 var run = function(socket){
-  console.log('connect....');
-
- 
-  //socket.send('Hello from SocketIO');
+  //console.log(socket);
+  console.log(`Client ${socket.id} connected`);
+  OnlineUser.push(socket);
 
   socket.on('message', function(msg){
-      console.log('Received: ' + msg);
-      socket.emit('message', 'Hello from Socket.IO');
+      console.log(`Client ${socket.id} send: ${msg}`);
   });
+
+  socket.on('disconnect', ()=>{
+    OnlineUser.splice(OnlineUser.indexOf(socket), 1);
+    console.log(`Client ${socket.id} disconnected`)
+  });
+
 
 }
 

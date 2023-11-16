@@ -24,7 +24,7 @@
 
 #include "AppDelegate.h"
 #include "MenuScene.h"
-
+#include "Socket.h"
 //#define USE_AUDIO_ENGINE 1
 
 #if USE_AUDIO_ENGINE
@@ -68,11 +68,14 @@ static int register_all_packages()
 }
 
 bool AppDelegate::applicationDidFinishLaunching() {
+    //initialize socket
+    Socket::getInstance()->connect();
+
     // initialize director
     auto director = Director::getInstance();
     auto glview = director->getOpenGLView();
     if(glview == nullptr) {
-        glview = GLViewImpl::createWithRect("Board Game", Rect(200, 200, designResolutionSize.width, designResolutionSize.height));
+        glview = GLViewImpl::createWithRect("O an quan", Rect(200, 200, designResolutionSize.width, designResolutionSize.height));
         director->setOpenGLView(glview);
     }
     
@@ -105,7 +108,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
 
     // create a scene. it's an autorelease object
     auto Menu = MenuScene::createScene();
-
+    
     // run
     director->runWithScene(Menu);
     
