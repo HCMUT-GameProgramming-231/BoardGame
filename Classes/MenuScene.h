@@ -13,12 +13,9 @@ public:
 	static cocos2d::Scene* createScene();
 
 	virtual bool init();
-
-
-	// SIODelegate
 	CREATE_FUNC(MenuScene);
 
-	std::string AI_mode;
+	int AI_mode;
 	std::string state;
 };
 

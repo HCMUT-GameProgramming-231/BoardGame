@@ -1,7 +1,7 @@
 ﻿#include "MenuScene.h"
 #include "Game2P.h"
 #include "Socket.h"
-
+#include "AudioEngine.h"
 USING_NS_CC;
 
 Scene* MenuScene::createScene()
@@ -23,9 +23,10 @@ bool MenuScene::init()
 		return false;
 	}
 
-	this->AI_mode = "Easy";
+	this->AI_mode = AI_MODE_EASY;
 	this->state = "";
 	if (Socket::getInstance() == nullptr) log("NULL");
+
 
 
 	Size visibleSize = Director::getInstance()->getVisibleSize();
@@ -171,15 +172,20 @@ bool MenuScene::init()
 	MouseEv->onMouseDown = [&, _1v1_AI_btn_rect, _1v1vPC_btn_rect, _1v1_PVP_btn_rect,
 								how_to_play_btn_rect, setting_btn_rect, exit_btn_rect](EventMouse* event)
 	{
+		AudioEngine::play2d("Sound/click.mp3");
+		
 		auto MousePos = Vec2(event->getCursorX(), event->getCursorY());
 		if (_1v1_AI_btn_rect.containsPoint(MousePos))
 		{
 			auto GameScene = (Game2P*) Game2P::createScene();
+			GameScene->run_AI_mode(this->AI_mode);
 			Director::getInstance()->replaceScene(GameScene);
 		}
 		else if (_1v1_PVP_btn_rect.containsPoint(MousePos))
 		{
-			log("1 vs 1 PVP button pressed");
+			auto GameScene = (Game2P*)Game2P::createScene();
+			GameScene->run_PvP_mode();
+			Director::getInstance()->replaceScene(GameScene);
 		}
 		else if (_1v1vPC_btn_rect.containsPoint(MousePos))
 		{
@@ -282,8 +288,8 @@ ca soi trong o\n   do. Tro choi ket thuc khi 2 quan bi an hoac \n   khong con so
 				hard_label->setName("hard");
 				setting_board->addChild(hard_label);
 
-				if (this->AI_mode == "Easy") easy_label->enableShadow();
-				else if (this->AI_mode == "Medium") medium_label->enableShadow();
+				if (this->AI_mode == AI_MODE_EASY) easy_label->enableShadow();
+				else if (this->AI_mode == AI_MODE_HARD) medium_label->enableShadow();
 				else hard_label->enableShadow();
 
 				this->state = "setting opening";
@@ -317,21 +323,21 @@ ca soi trong o\n   do. Tro choi ket thuc khi 2 quan bi an hoac \n   khong con so
 						}
 						else if (name == "easy")
 						{
-							this->AI_mode = "Easy";
+							this->AI_mode = AI_MODE_EASY;
 							((Label*)child)->enableShadow();
 							((Label*)setting_board->getChildByName("medium"))->disableEffect();
 							((Label*)setting_board->getChildByName("hard"))->disableEffect();
 						}
 						else if (name == "medium")
 						{
-							this->AI_mode = "Medium";
+							this->AI_mode = AI_MODE_MEDIUM;
 							((Label*)child)->enableShadow();
 							((Label*)setting_board->getChildByName("easy"))->disableEffect();
 							((Label*)setting_board->getChildByName("hard"))->disableEffect();
 						}
 						else
 						{
-							this->AI_mode = "hard";
+							this->AI_mode = AI_MODE_HARD;
 							((Label*)child)->enableShadow();
 							((Label*)setting_board->getChildByName("medium"))->disableEffect();
 							((Label*)setting_board->getChildByName("easy"))->disableEffect();

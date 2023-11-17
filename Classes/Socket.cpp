@@ -10,7 +10,7 @@ Socket* Socket::getInstance() {
 }
 
 void Socket::connect() {
-    socket = SocketIO::connect("127.0.0.1:3200", *this);
+    socket = SocketIO::connect("192.168.1.8:3200", *this);
 }
 
 void Socket::send(const std::string& message) {
