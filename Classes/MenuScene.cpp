@@ -173,7 +173,6 @@ bool MenuScene::init()
 								how_to_play_btn_rect, setting_btn_rect, exit_btn_rect](EventMouse* event)
 	{
 		AudioEngine::play2d("Sound/click.mp3");
-		
 		auto MousePos = Vec2(event->getCursorX(), event->getCursorY());
 		if (_1v1_AI_btn_rect.containsPoint(MousePos))
 		{

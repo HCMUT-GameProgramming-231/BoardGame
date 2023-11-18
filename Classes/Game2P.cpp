@@ -2,11 +2,11 @@
 #include "Socket.h"
 #include "MenuScene.h"
 #include "AudioEngine.h"
-#include <filesystem>
-namespace fs = std::filesystem;
+#include "Minimax.h"
 
 USING_NS_CC;
 using namespace network;
+
 Scene* Game2P::createScene()
 {
 	return Game2P::create();
@@ -14,41 +14,32 @@ Scene* Game2P::createScene()
 
 bool Game2P::init()
 {
+	
 	if (!Scene::init())
 	{
 		return false;
 	}
 
-	Size visibleSize = Director::getInstance()->getVisibleSize();
-	Vec2 origin = Director::getInstance()->getVisibleOrigin();
-	this->state = "running";
+	//get screen size
+	auto screen_size = Director::getInstance()->getVisibleSize();
 
+	//BEGIN BACKGROUND -------------------------------------------------------------------------------------------
 	//background
-	auto background = Sprite::create("Assets/GameScene/background.png");
-	background->setAnchorPoint(Vec2(0, 0));
-	background->setPosition(Vec2(0, 0));
-	Size bgsize = background->getContentSize();
-	background->setScale(visibleSize.width / bgsize.width, visibleSize.height / bgsize.height);
-	this->addChild(background);
+	auto bg = Sprite::create("Assets/GameScene/background.png");
+	auto bg_size = bg->getContentSize();
+	bg->setScale(screen_size.width / bg_size.width, screen_size.height / bg_size.height);
+	bg->setPosition(screen_size.width / 2, screen_size.height / 2);
+	this->addChild(bg);
+	//END BACKGROUND --------------------------------------------------------------------------------------------
 
-	//board
-	auto board = Sprite::create("Assets/GameScene/2PlayerBoard_new.png");
-	board->setPosition(visibleSize.width / 2, visibleSize.height / 2);
-	board->setScale(2);
-	this->addChild(board);
+	//BEGIN BUTTONS ---------------------------------------------------------------------------------------------
+	
+	//back button
+	auto back_btn = Sprite::create("Assets/GameScene/back.png");
+	back_btn->setPosition(50, screen_size.height - 50);
+	back_btn->setName("back");
+	this->addChild(back_btn);
 
-	//Point
-	auto your_point = Label::createWithTTF("Your point: 0", "fonts/arial.ttf", 50);
-	your_point->setTextColor(Color4B(0, 0, 0, 255));
-	your_point->setPosition(visibleSize.width * 2 / 5, visibleSize.height / 5);
-	your_point->setName("your_point");
-	this->addChild(your_point);
-
-	auto opponent_point  = Label::createWithTTF("Opponen point: 0", "fonts/arial.ttf", 50);
-	opponent_point->setTextColor(Color4B(0, 0, 0, 255));
-	opponent_point->setPosition(visibleSize.width * 3 / 5, visibleSize.height * 4 / 5);
-	opponent_point->setName("opponent_point");
-	this->addChild(opponent_point);
 
 	//pause button
 	pause_btn = Sprite::create("Assets/GameScene/pause_btn.png");
@@ -57,205 +48,283 @@ bool Game2P::init()
 	pause_btn->retain();
 	this->addChild(pause_btn);
 
-	//resume btn
+	//resume button
 	resume_btn = Sprite::create("Assets/GameScene/resume_btn.png");
 	resume_btn->setPosition(50, 50);
 	resume_btn->setName("resume");
 	resume_btn->retain();
 
-	//back to menu btn
-	auto back_btn = Sprite::create("Assets/GameScene/back.png");
-	back_btn->setPosition(50, visibleSize.height - 50);
-	back_btn->setName("back");
-	this->addChild(back_btn);
+	//END BUTTONS -----------------------------------------------------------------------------------------------
 
-	//init  board squares
-	Vec2 init_pos = Vec2(visibleSize.width / 4.8 + 5, visibleSize.height * 3 / 5 + 5);
-	auto rect_size = Size(visibleSize.width / 7.5, visibleSize.height / 5 - 10);
-	auto x_step = rect_size.width + 5;
-	auto y_step = rect_size.height + 13;
+	//BEGIN BOARD -----------------------------------------------------------------------------------------------
+	auto board = Sprite::create("Assets/GameScene/2PlayerBoard.png");
+	board->setPosition(screen_size.width / 2, screen_size.height / 2);
+	board->setScale(2);
+	this->addChild(board);
+
+	//init board square
+	float init_x = screen_size.width / 4.5 - 10;
+	float init_y = screen_size.height / 1.75 + 30;
+	auto sq_size = Size(screen_size.width / 7.5, screen_size.height / 5.5);
+	float step_x = sq_size.width + 5;
+	float step_y = sq_size.height + 20;
 	int count = 0;
-	
-	
-
-	for (int i = 0; i < 10; i++, count++)
+	for (int i = 0; i < 12; i++)
 	{
-		if (count == 5)
+		auto temp = Sprite::create();
+		temp->setTextureRect(Rect(0, 0, sq_size.width, sq_size.height));
+		temp->setTag(i);
+		temp->retain();
+		auto square = board_square();
+		auto label = Label::createWithTTF("", "fonts/arial.ttf", 30);
+		label->setTextColor((Color4B(0, 0, 0, 255)));
+		if (i == 0)
 		{
-			count = 0;
-			init_pos.y -= y_step ;
+			temp->setPosition(init_x - step_x, screen_size.height / 2);
+			label->setPosition(init_x - step_x + 50, screen_size.height / 2 - 50);
+			stones_number_in_each_sq.push_back(label);
+			//this->addChild(temp);
+			square.square = temp;
+			sq.push_back(square);
+			continue;
 		}
-		auto r = Sprite::create();
-		r->setContentSize(rect_size);
-		//r->setTextureRect(Rect(0, 0, rect_size.width, rect_size.height));
-		r->setPosition(init_pos.x + count * x_step, init_pos.y);
-		r->setTag(i);
-		r->retain();
-		auto sq = board_square();
-		sq.square = r;
-		sq.current_stones = 5;
-		squares.push_back(sq);
-		//this->addChild(r);
+		
+		if (i == 6)
+		{
+			temp->setPosition(init_x + 5 * step_x, screen_size.height / 2);
+			label->setPosition(init_x + 5 * step_x + 25, screen_size.height / 2 - 50);
+			stones_number_in_each_sq.push_back(label);
+			//this->addChild(temp);
+			square.square = temp;
+			sq.push_back(square);
+			init_y -= step_y;
+			count--;
+			continue;
+		}
 
-		auto label = Label::createWithTTF(std::to_string(5), "fonts/arial.ttf", 20);
-		label->setTextColor(Color4B(0, 0, 0, 255));
-		label->setPosition(init_pos.x + count * x_step + 55, init_pos.y - 65);
-		this->addChild(label);
-		label->setName("stones at " + std::to_string(i));
+		temp->setPosition(init_x + count * step_x, init_y);
+		label->setPosition(init_x + count * step_x + 50, init_y - 50);
+		stones_number_in_each_sq.push_back(label);
+		//this->addChild(temp);
+		square.square = temp;
+		sq.push_back(square);
+		if (i >= 6)
+		{
+			count--;
+		}
+		else
+		{
+			count++;
+		}
 	}
 
-	//rect at 2 side
-	rect_size = Size(visibleSize.width / 7.5, visibleSize.height / 5 - 10);
-	auto rect1 = Sprite::create();
-	rect1->setContentSize(rect_size);
-	//rect1->setTextureRect(Rect(0, 0, rect_size.width, rect_size.height));
-	rect1->setPosition(init_pos.x - rect_size.width, init_pos.y + y_step / 2);
-	rect1->setTag(10);
-	//this->addChild(rect1);
-	rect1->retain();
-	auto sq1 = board_square();
-	sq1.square = rect1;
-	sq1.current_stones = 5;
-	squares.push_back(sq1);
-	auto labelsq1 = Label::createWithTTF(std::to_string(5), "fonts/arial.ttf", 20);
-	labelsq1->setTextColor(Color4B(0, 0, 0, 255));
-	labelsq1->setPosition(init_pos.x - rect_size.width + 55, init_pos.y + y_step / 2 - 65);
-	this->addChild(labelsq1);
-	labelsq1->setName("stones at " + std::to_string(10));
+	//END BOARD -------------------------------------------------------------------------------------------------
 
-	auto rect2 = Sprite::create();
-	rect2->setContentSize(rect_size);
-	//rect2->setTextureRect(Rect(0, 0, rect_size.width, rect_size.height));
-	rect2->setPosition(init_pos.x + 5*rect_size.width + 30, init_pos.y + y_step / 2);
-	//this->addChild(rect2);
-	rect2->setTag(11);
-	rect2->retain();
-	auto sq2 = board_square();
-	sq2.square = rect2;
-	sq2.current_stones = 5;
-	squares.push_back(sq2);
-	auto labelsq2 = Label::createWithTTF(std::to_string(5), "fonts/arial.ttf", 20);
-	labelsq2->setTextColor(Color4B(0, 0, 0, 255));
-	labelsq2->setPosition(init_pos.x + 5 * rect_size.width + 30 + 55, init_pos.y + y_step / 2 - 65);
-	this->addChild(labelsq2);
-	labelsq2->setName("stones at " + std::to_string(10));
+	//BEGIN INIT PIECES -----------------------------------------------------------------------------------------
+	//preload sprite frame
+	SpriteFrameCache::getInstance()->addSpriteFramesWithFile("Assets/GameScene/stones_sheet.plist");
+
+	//normal piece
+	int sq_index = 1;
+	for (int i = 0; i < 50; )
+	{
+		int rand = RandomHelper::random_int(1, 5);
+		std::string sprite_path = "stone" + std::to_string(rand) + ".png";
+		//log("%s", sprite_path.c_str());
+		piece p;
+		p.sq_num = i;
+		p.point = 1;
+		p.sprite = Sprite::createWithSpriteFrameName(sprite_path);
+		p.sprite->retain();
+		auto size = p.sprite->getContentSize();
+		p.sprite->setScale(50 / size.width, 50 / size.height);
+		//p.sprite->setPosition(RandomHelper::random_int(0, (int)screen_size.width), RandomHelper::random_int(0, (int)screen_size.height));
+		//this->addChild(p.sprite);
+		sq[sq_index].pieces.push_back(p);
+		i++;
+		if (i % 5 == 0) sq_index++;
+		if (i == 25) sq_index++;
+		//log("%i", sq_index);
+	}
 	
-	//arrow
+	//big pieces
+	piece p1;
+	p1.sprite = Sprite::createWithSpriteFrameName("stone6.png");
+	p1.point = 5;
+	p1.sprite->retain();
+	auto size = p1.sprite->getContentSize();
+	p1.sprite->setScale(100 / size.width, 100 / size.height);
+	sq[0].pieces.push_back(p1);
+
+	piece p2;
+	p2.sprite = Sprite::createWithSpriteFrameName("stone6.png");
+	p2.point = 5;
+	p2.sprite->retain();
+	p2.sprite->setScale(100 / size.width, 100 / size.height);
+	sq[6].pieces.push_back(p2);
+
+	//init position
+	for (int i = 0; i < 12; i++)
+	{
+		auto box = sq[i].square->getBoundingBox();
+		auto minX = box.getMinX() + 25, maxX = box.getMaxX() - 25, minY = box.getMinY() + 25, maxY = box.getMaxY() - 25;
+		if (i == 0 || i == 6)
+		{
+			minX += 25;
+			maxX -= 25;
+		}
+		for (int z = 0; z < sq[i].pieces.size(); z++)
+		{
+			auto pos_x = RandomHelper::random_real(minX, maxX);
+			auto pos_y = RandomHelper::random_real (minY, maxY);
+			sq[i].pieces[z].sprite->setPosition(pos_x, pos_y);
+			this->addChild(sq[i].pieces[z].sprite);
+		}
+	}
+
+	//END INIT PIECES -------------------------------------------------------------------------------------------
+
+	//BEGIN LABEL
+	myPoint = Label::createWithTTF("My point: 0", "fonts/arial.ttf", 40);
+	myPoint->setTextColor(Color4B(0, 0, 0, 255));
+	myPoint->setPosition(screen_size.width / 3, screen_size.height / 5);
+	this->addChild(myPoint);
+
+	opponentPoint = Label::createWithTTF("Opponent point: 0", "fonts/arial.ttf", 40);
+	opponentPoint->setTextColor(Color4B(0, 0, 0, 255));
+	opponentPoint->setPosition(2 * screen_size.width / 3, 4 * screen_size.height / 5);
+	this->addChild(opponentPoint);
+
+	for (int i = 0; i < stones_number_in_each_sq.size(); i++)
+	{
+		this->addChild(stones_number_in_each_sq[i]);
+	}
+
+	//END LABEL
+
+	//BEGIN INIT ARROW ------------------------------------------------------------------------------------------
 	arrow = Sprite::create("Assets/GameScene/arrow.png");
-	arrow->setContentSize(Size(100, 150));
+	arrow->setScale(0.25);
+	this->addChild(arrow);
 	arrow->retain();
-	arrow->setName("arrow");
-	
+	arrow->setPosition(-50, -50);
+
 	left_arrow = Sprite::create("Assets/GameScene/left_arrow.png");
-	left_arrow->setContentSize(Size(50, 70));
+	left_arrow->setScale(0.25);
+	this->addChild(left_arrow);
 	left_arrow->retain();
-	left_arrow->setName("left_arrow");
+	left_arrow->setPosition(-50, -50);
 
 	right_arrow = Sprite::create("Assets/GameScene/right_arrow.png");
-	right_arrow->setContentSize(Size(50, 70));
+	right_arrow->setScale(0.25);
+	this->addChild(right_arrow);
 	right_arrow->retain();
-	right_arrow->setName("right_arrow");
+	right_arrow->setPosition(-50, -50);
 
-	//get stone sprite
-	// load the Sprite Sheet
-	auto spritecache = SpriteFrameCache::getInstance();
-	// the .plist file can be generated with any of the tools mentioned below
-	spritecache->addSpriteFramesWithFile("Assets/GameScene/stones_sheet.plist");
+	//arrow floating action
+	auto float_up = MoveBy::create(1, Vec2(0, 50));
+	auto float_down = MoveBy::create(1, Vec2(0, -50));
+	auto seq = Sequence::create(float_up, float_down, nullptr);
+	floating = RepeatForever::create(seq);
+	floating->retain();
 
-	//init board
-	this->initBoard();
 
-	//default listener
-	auto MouseEv = EventListenerMouse::create();
-	MouseEv->onMouseDown = [&, back_btn](EventMouse* event)
-	{
-		AudioEngine::play2d("Sound/click.mp3");
-		auto MousePos = Vec2(event->getCursorX(), event->getCursorY());
-		if (back_btn->getBoundingBox().containsPoint(MousePos))
-		{
-			//add confirm box
+	//END INIT ARROW --------------------------------------------------------------------------------------------
 
-			//return to menu (temporary)
-			auto menu = MenuScene::createScene();
-			Director::getInstance()->replaceScene(menu);
-		}
-	};
-
-	_eventDispatcher->addEventListenerWithSceneGraphPriority(MouseEv, this);
-
+	this->scheduleUpdate();
 	return true;
+}
+
+void Game2P::update(float delta)
+{
+	time += delta;
+	//log("%f", time);
+	if (mode == "AI")
+	{
+		if (time - last_time >= 0.25) {
+			last_time = time;
+			this->update_point();
+			this->update_stones_number();
+			if (this->spreading)
+			{
+				if (this->direction == -1) this->move_stones_left();
+			}
+		}
+
+		if (!myTurn)
+		{
+
+		}
+		
+	}
+	
 }
 
 void Game2P::run_AI_mode(int mode)
 {
-	//event listener
+	this->mode = "AI";
+	this->myTurn = true;
 	auto MouseEv = EventListenerMouse::create();
-	MouseEv->onMouseDown = [&](EventMouse* event) {
+	MouseEv->onMouseDown = [&](EventMouse* event)
+	{
+		AudioEngine::play2d("Sound/click.mp3");
 		auto MousePos = Vec2(event->getCursorX(), event->getCursorY());
-		if (auto btn = this->getChildByName("pause"))
+		//get all buttons
+		auto back = this->getChildByName("back");
+		auto pause = this->getChildByName("pause");
+		auto resume = this->getChildByName("resume");
+		if (back->getBoundingBox().containsPoint(MousePos))
 		{
-			auto r = btn->getBoundingBox();
-			if (r.containsPoint(MousePos))
-			{
-				this->removeChild(btn);
-				this->addChild(resume_btn);
-				this->state = "pausing";
-				Director::getInstance()->pause();
-			}
+			auto menu = MenuScene::createScene();
+			Director::getInstance()->replaceScene(menu);
 		}
-		else if (auto btn = this->getChildByName("resume"))
+		else if (pause && pause->getBoundingBox().containsPoint(MousePos))
 		{
-			auto r = btn->getBoundingBox();
-			if (r.containsPoint(MousePos))
-			{
-				this->removeChild(btn);
-				this->addChild(pause_btn);
-				this->state = "running";
-				Director::getInstance()->resume();
-			}
+			this->addChild(resume_btn);
+			this->removeChild(pause);
+			Director::getInstance()->pause();
 		}
-
-		auto left_arrow = this->getChildByName("left_arrow");
-		auto right_arrow = this->getChildByName("right_arrow");
-		if (left_arrow && left_arrow->getBoundingBox().containsPoint(MousePos))
+		else if (resume && resume->getBoundingBox().containsPoint(MousePos))
 		{
-			log("left arrow click");
+			this->addChild(pause_btn);
+			this->removeChild(resume);
+			Director::getInstance()->resume();
 		}
-		else if (right_arrow && right_arrow->getBoundingBox().containsPoint(MousePos))
+		else if (left_arrow->getBoundingBox().containsPoint(MousePos))
 		{
-			log("right arrow click");
+			int tag = arrow->getTag();
+			if (tag >= 7 && tag <= 11) this->move_stones_left(true);
+		}
+		else if (right_arrow->getBoundingBox().containsPoint(MousePos))
+		{
+			int tag = arrow->getTag();
+			if (tag >= 7 && tag <= 11) this->move_stones_left();
 		}
 		else
 		{
-			for (int i = 5; i < 10; i++)
+			if (this->spreading || !myTurn) return;
+			//check if click on board
+			for (int i = 7; i < 12; i++)
 			{
-				auto board_rect = this->squares[i].square->getBoundingBox();
-				//log("%i", board_rect.containsPoint(MousePos));
-				if (board_rect.containsPoint(MousePos))
+				auto cur_sq = sq[i];
+				auto box = cur_sq.square->getBoundingBox();
+				if (box.containsPoint(MousePos))
 				{
-					float MidX = board_rect.getMidX(), MidY = board_rect.getMidY();
-					this->arrow->setPosition(MidX, MidY + 30);
-					this->removeChildByName("left_arrow");
-					this->removeChildByName("right_arrow");
-					this->right_arrow->setPosition(MidX + 40, MidY);
-					this->left_arrow->setPosition(MidX - 40, MidY);
-					this->addChild(this->right_arrow);
-					this->addChild(this->left_arrow);
-					if (this->getChildByName("arrow") == nullptr)
-					{
-						this->addChild(arrow);
-					}
+					//draw arrow at this sq
+					arrow->setPosition(box.getMidX(), box.getMidY());
 					arrow->stopAllActions();
-					auto float_up = MoveBy::create(1, Vec2(0, 50));
-					auto float_down = MoveBy::create(1, Vec2(0, -50));
-					auto seq = Sequence::create(float_up, float_down, nullptr);
-					auto repeat = RepeatForever::create(seq);
-					//this->addChild(arrow);
-					arrow->runAction(repeat);
+					arrow->runAction(floating);
+					arrow->setTag(cur_sq.square->getTag());
+
+					left_arrow->setPosition(box.getMidX() - 50, box.getMidY() - 30);
+					//right_arrow->setPosition(box.getMidX() + 50, box.getMidY() - 30);
+					break;
 				}
 			}
 		}
+
 	};
+
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(MouseEv, this);
 }
 
@@ -264,64 +333,119 @@ void Game2P::run_PvP_mode()
 	
 }
 
-void Game2P::initBoard()
+void Game2P::move_stones_left(bool first_move)
 {
-	this->drawStones(true);
+	int tag = arrow->getTag();
+	if (first_move)
+	{
+		
+		for (int i = 0; i < sq[tag].pieces.size(); i++)
+		{
+			hold.push_back(sq[tag].pieces[i]);
+			sq[tag].pieces[i].sprite->removeFromParent();
+		}
+		sq[tag].pieces.clear();
+		this->direction = -1;
+		this->spreading = true;
+		tag += 1;
+		if (tag == 12) tag = 0;
+		arrow->setTag(tag);
+		auto pos = sq[tag].square->getPosition();
+		arrow->setPosition(pos);
+		left_arrow->setPosition(-50, -50);
+		right_arrow->setPosition(-50, -50);
+	}
+	else 
+	{
+		if (hold.size() == 0)
+		{
+			this->spreading = false;
+			arrow->runAction(floating);
+			if (this->check_next_sq()) this->move_stones_left(true);
+			return;
+		}
+		auto cur_sq = sq[tag];
+		auto p = hold[0];
+		sq[tag].pieces.push_back(p);
+		
+		auto box = cur_sq.square->getBoundingBox();
+		float minX = box.getMinX() + 25, maxX = box.getMaxX() - 25, minY = box.getMinY() + 25, maxY = box.getMaxY() - 25;
+		auto pos_x = RandomHelper::random_real(minX, maxX);
+		auto pos_y = RandomHelper::random_real(minY, maxY);
+		p.sprite->setPosition(pos_x, pos_y);
+		this->addChild(p.sprite);
+		
+		hold.erase(hold.begin());
+		tag += 1;
+		if (tag == 12) tag = 0;
+		arrow->setTag(tag);
+		arrow->setPosition(sq[tag].square->getPosition());
+		this->removeChild(arrow);
+		this->removeChild(left_arrow);
+		this->removeChild(right_arrow);
+		this->addChild(right_arrow);
+		this->addChild(left_arrow);
+		this->addChild(arrow);
+	}
+
 }
 
-void Game2P::drawStones(bool init)
+
+void Game2P::update_point()
 {
-	for (int i = 0; i < 10; i++)
+	myPoint->setString("My point: " + std::to_string(mp));
+	opponentPoint->setString("Opponent point: " + std::to_string(opp));
+}
+
+void Game2P::update_stones_number()
+{
+	for (int i = 0; i < stones_number_in_each_sq.size(); i++)
 	{
-		auto r = squares[i].square->getBoundingBox();
-		float minX = r.getMinX() + 25, maxX = r.getMaxX() - 25, minY = r.getMinY() + 25, maxY = r.getMaxY() - 25;
-		for (int z = 0; z < squares[i].current_stones; z++)
-		{
-			float xPos = RandomHelper::random_real(minX, maxX);
-			float yPos = RandomHelper::random_real(minY, maxY);
-			int stone_index = RandomHelper::random_int(1, 5);
-			auto stone = Sprite::createWithSpriteFrameName("stone" + std::to_string(stone_index) + ".png");
-			auto size = stone->getContentSize();
-			stone->setScale(50 / size.width, 50 / size.height);
-			stone->setPosition(xPos, yPos);
-			this->addChild(stone);
-		}
+		log("tag: %i %i", i, sq[i].pieces.size());
+		stones_number_in_each_sq[i]->setString(std::to_string(sq[i].pieces.size()));
+	//	log("size: %i", sq[i].pieces.size());
 	}
-	if (init == true)
+}
+
+bool Game2P::check_next_sq()
+{
+	int tag = arrow->getTag();
+	int next_tag;
+	if (this->direction == -1)
 	{
-		for (int i = 10; i < 12; i++)
-		{
-			auto r = squares[i].square->getBoundingBox();
-			float minX = r.getMinX() + 25, maxX = r.getMaxX() - 25, minY = r.getMinY() + 25, maxY = r.getMaxY() - 25;
-			float centerX = r.getMidX();
-			float centerY = r.getMidY();
-			auto big_stone = Sprite::createWithSpriteFrameName("stone" + std::to_string(6) + ".png");
-			auto size = big_stone->getContentSize();
-			big_stone->setScale(150 / size.width, 150 / size.height);
-			big_stone->setPosition(centerX, centerY);
-			this->addChild(big_stone);
-
-			for (int z = 0; z < 4; z++)
-			{
-
-				float xPos = RandomHelper::random_real(minX, maxX);
-				float yPos = RandomHelper::random_real(minY, maxY);
-				int stone_index = RandomHelper::random_int(1, 5);
-				auto stone = Sprite::createWithSpriteFrameName("stone" + std::to_string(stone_index) + ".png");
-				auto size = stone->getContentSize();
-				stone->setScale(50 / size.width, 50 / size.height);
-				stone->setPosition(xPos, yPos);
-				this->addChild(stone);
-			}
-		}
+		next_tag = tag + 1;
 	}
 	else
 	{
-
+		next_tag = tag - 1;
 	}
-}
+	if (next_tag == 12) next_tag = 0;
+	else if (next_tag == -1) next_tag = 11;
 
-void Game2P::checkMousePos(Vec2 MousePos)
-{
-	
+	//case 1
+	if (sq[tag].pieces.size() != 0 && tag != 0 && tag != 6)
+	{
+		return true;
+	}
+	else
+	{
+		auto sqr = sq[next_tag];
+		if (sqr.pieces.size() != 0)
+		{
+			for (int i = 0; i < sqr.pieces.size(); i++)
+			{
+				const auto &p = sqr.pieces[i];
+				if (myTurn) mp += p.point;
+				else opp += p.point;
+				this->removeChild(p.sprite);
+				p.sprite->release();
+			}
+			sq[next_tag].pieces.clear();
+			log("%i %i", next_tag, sqr.pieces.size());
+		}
+	}
+
+	myTurn = !myTurn;
+
+	return false;
 }
