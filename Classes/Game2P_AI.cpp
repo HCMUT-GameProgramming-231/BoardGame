@@ -56,7 +56,7 @@ bool Game2P::init()
 	//END BUTTONS -----------------------------------------------------------------------------------------------
 
 	//BEGIN BOARD -----------------------------------------------------------------------------------------------
-	auto board = Sprite::create("Assets/GameScene/2PlayerBoard.png");
+	auto board = Sprite::create("Assets/GameScene/2PlayerBoard_new.png");
 	board->setPosition(screen_size.width / 2, screen_size.height / 2);
 	board->setScale(2);
 	this->addChild(board);
@@ -561,4 +561,5 @@ void Game2P::showResult()
 	label->setTextColor(Color4B(0, 0, 0, 255));
 	label->setPosition(200, 150);
 	result_table->addChild(label);
+
 }

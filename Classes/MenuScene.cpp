@@ -1,6 +1,7 @@
 ﻿#include "MenuScene.h"
 #include "Game2P_AI.h"
 #include "Game2P_PVP.h"
+#include "Game3P.h"
 #include "Socket.h"
 #include "AudioEngine.h"
 USING_NS_CC;
@@ -191,7 +192,10 @@ bool MenuScene::init()
 		}
 		else if (_1v1vPC_btn_rect.containsPoint(MousePos))
 		{
-			log("1 vs 1 vs PC button pressed");
+			//socket send matching 1v1v1
+			Socket::getInstance()->send("match 1v1v1");
+			this->state = "matching";
+			this->show_matching_board();
 		}
 		else if (how_to_play_btn_rect.containsPoint(MousePos) && this->state=="")
 		{
@@ -434,5 +438,11 @@ void MenuScene::run_1v1_PvP(int id, bool move_first)
 {
 	auto game = (Game2P_PvP *)Game2P_PvP::createScene();
 	game->set_opponent_info(id, !move_first);
+	Director::getInstance()->replaceScene(game);
+}
+void MenuScene::run_1v1v1(int id, int move_order)
+{
+	auto game = (Game3P*)Game3P::createScene();
+	game->setup(id, move_order);
 	Director::getInstance()->replaceScene(game);
 }

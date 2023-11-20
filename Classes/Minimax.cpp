@@ -86,7 +86,7 @@ state_eval minimax_alpha_beta(int cur_state[12][1], int player_to_move, std::vec
 		if (player_to_move == -1) new_val = res.p2_score - res.p1_score;
 		else new_val = res.p1_score - res.p2_score;
 
-		new_val = -new_val;
+		//new_val = -new_val;
 		//cocos2d::log("alpha: %i, beta: %i", alpha, beta);
 
 		if (new_val > alpha)

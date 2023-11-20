@@ -16,7 +16,7 @@ public:
 	static cocos2d::Scene* createScene();
 	void show_matching_board();
 	void run_1v1_PvP(int id, bool move_first);
-
+	void run_1v1v1(int id, int move_order);
 	void update(float delta) override;
 
 	virtual bool init();

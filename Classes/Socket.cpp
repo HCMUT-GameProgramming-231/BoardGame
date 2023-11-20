@@ -1,5 +1,6 @@
 #include "Socket.h"
 #include "MenuScene.h"
+#include "Game3P.h"
 #include "Game2P_PVP.h"
 #include <vector>
 #include <sstream>
@@ -49,12 +50,25 @@ void Socket::onMessage(SIOClient* client, const std::string& msg)
         {
             std::vector<std::string> split_str = split(data);
             std::string game_mode = split_str[1];
-           //log("%s", split_str[2].substr(split_str[2].find_last_of("=")).c_str());
-            int move_first = std::stoi(split_str[2].substr(split_str[2].find_last_of("=") + 1));
-            int opponent_id = std::stoi(split_str[3].substr(split_str[3].find_last_of("=") + 1));
+            if (game_mode == "1v1")
+            {
+                // log("%s", split_str[2].substr(split_str[2].find_last_of("=")).c_str());
+                int move_first = std::stoi(split_str[2].substr(split_str[2].find_last_of("=") + 1));
+                int opponent_id = std::stoi(split_str[3].substr(split_str[3].find_last_of("=") + 1));
 
-            //log("opponent id: %i", opponent_id);
-            ((MenuScene*)scene)->run_1v1_PvP(opponent_id, move_first);
+                //log("opponent id: %i", opponent_id);
+                ((MenuScene*)scene)->run_1v1_PvP(opponent_id, move_first);
+            }
+            else if (game_mode == "1v1v1")
+            {
+                int move_order = std::stoi(split_str[2].substr(split_str[2].find_last_of("=") + 1));
+                int opponent_id = std::stoi(split_str[3].substr(split_str[3].find_last_of("=") + 1));
+
+                //log("%i %i", opponent_id, move_order);
+                //log("opponent id: %i", opponent_id);
+                ((MenuScene*)scene)->run_1v1v1(opponent_id, move_order);
+            }
+           
         }
     }
     else if (scene_name == "1v1 PvP")
@@ -98,6 +112,49 @@ void Socket::onMessage(SIOClient* client, const std::string& msg)
             }
         }
         ((Game2P_PvP*)scene)->state = "";
+    }
+    else if (scene->getName() == "1v1v1")
+    {
+        std::vector<std::string> split_str = split(data);
+        log("%s 1v1v1", data.c_str());
+        if (split_str[0].find("arrow") != std::string::npos)
+        {
+            int tag = stoi(split_str[1].substr(split_str[1].find("=") + 1));
+            log("%i tag from opp", tag);
+            ((Game3P*)scene)->set_arrow(tag);
+        }
+        else if (split_str[0].find("move") != std::string::npos)
+        {
+            ((Game3P*)scene)->spread_stones(true);
+        }
+        else if (split_str[0].find("state") != std::string::npos)
+        {
+            if (split_str[1].find("out_of_move") != std::string::npos)
+            {
+                ((Game3P*)scene)->opponent_out_of_move();
+            }
+            else if (split_str[1].find("end") != std::string::npos) ((Game3P*)scene)->showResult();
+        }
+        else if (split_str[0].find("request") != std::string::npos)
+        {
+            if (split_str[1].find("pause_request") != std::string::npos)
+            {
+                ((Game3P*)scene)->show_pause_request();
+            }
+            else if (split_str[1].find("resume") != std::string::npos)
+            {
+                ((Game3P*)scene)->resume_from_pause();
+            }
+            else if (split_str[1].find("pause_accept") != std::string::npos)
+            {
+                ((Game3P*)scene)->show_pause();
+            }
+            else if (split_str[1].find("run_away") != std::string::npos)
+            {
+                ((Game3P*)scene)->opponent_run_away();
+            }
+        }
+        ((Game3P*)scene)->state = "";
     }
     
 }

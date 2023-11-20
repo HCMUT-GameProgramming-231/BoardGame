@@ -53,8 +53,8 @@ bool Game2P_PvP::init()
 
 	//END BUTTONS -----------------------------------------------------------------------------------------------
 
-		//BEGIN BOARD -----------------------------------------------------------------------------------------------
-	auto board = Sprite::create("Assets/GameScene/2PlayerBoard.png");
+	//BEGIN BOARD -----------------------------------------------------------------------------------------------
+	auto board = Sprite::create("Assets/GameScene/2PlayerBoard_new.png");
 	board->setPosition(screen_size.width / 2, screen_size.height / 2);
 	board->setScale(2);
 	this->addChild(board);
