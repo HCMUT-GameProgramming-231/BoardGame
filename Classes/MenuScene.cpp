@@ -1,8 +1,10 @@
 ﻿#include "MenuScene.h"
-#include "Game2P.h"
+#include "Game2P_AI.h"
+#include "Game2P_PVP.h"
 #include "Socket.h"
 #include "AudioEngine.h"
 USING_NS_CC;
+
 
 Scene* MenuScene::createScene()
 {
@@ -174,17 +176,18 @@ bool MenuScene::init()
 	{
 		AudioEngine::play2d("Sound/click.mp3");
 		auto MousePos = Vec2(event->getCursorX(), event->getCursorY());
+		Socket::getInstance()->send("hello");
 		if (_1v1_AI_btn_rect.containsPoint(MousePos))
 		{
 			auto GameScene = (Game2P*) Game2P::createScene();
 			GameScene->run_AI_mode(this->AI_mode);
 			Director::getInstance()->replaceScene(GameScene);
 		}
-		else if (_1v1_PVP_btn_rect.containsPoint(MousePos))
+		else if (_1v1_PVP_btn_rect.containsPoint(MousePos) && this->state == "")
 		{
-			auto GameScene = (Game2P*)Game2P::createScene();
-			GameScene->run_PvP_mode();
-			Director::getInstance()->replaceScene(GameScene);
+			Socket::getInstance()->send("match 1v1");
+			this->state = "matching";
+			this->show_matching_board();
 		}
 		else if (_1v1vPC_btn_rect.containsPoint(MousePos))
 		{
@@ -359,6 +362,20 @@ ca soi trong o\n   do. Tro choi ket thuc khi 2 quan bi an hoac \n   khong con so
 					this->removeChild(howtoplay_board);
 				}
 			}
+			else if (this->state == "matching")
+			{
+				auto matching_board = this->getChildByName("matching board");
+				auto board_pos = matching_board->getBoundingBox().origin;
+				MousePos.x -= board_pos.x;
+				MousePos.y -= board_pos.y;
+				auto close_rect = matching_board->getChildByName("close")->getBoundingBox();
+				if (close_rect.containsPoint(MousePos))
+				{
+					Socket::getInstance()->send("Unmatch");
+					this->state = "";
+					this->removeChild(matching_board);
+				}
+			}
 		}
 	};
 
@@ -367,6 +384,55 @@ ca soi trong o\n   do. Tro choi ket thuc khi 2 quan bi an hoac \n   khong con so
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(MouseEv, this);
 
 	//END MOUSE LISTENER ------------------------------------------------------------------
-	
+	this->setName("MenuScene");
+
+	this->scheduleUpdate();
+
 	return true;
+}
+
+
+void MenuScene::show_matching_board()
+{
+	auto size = Director::getInstance()->getVisibleSize();
+	auto board = Sprite::create("Assets/MenuScene/board.png");
+	this->addChild(board);
+	board->setPosition(size.width / 2, size.height / 2);
+	board->setName("matching board");
+
+	//close button
+	Size setting_size = board->getContentSize();
+	auto close_btn = Sprite::create("Assets/MenuScene/close_btn.png");
+	auto close_org_size = close_btn->getContentSize();
+	close_btn->setScale(30 / close_org_size.width);
+	close_btn->setPosition(setting_size.width - 25, setting_size.height - 25);
+	close_btn->setName("close");
+	board->addChild(close_btn);
+
+	//label
+	auto label = Label::createWithTTF("Matching", "fonts/arial.ttf", 40);
+	label->setTextColor(Color4B(0, 0, 0, 255));
+	label->setPosition(setting_size.width / 2, setting_size.height / 2);
+	label->setName("matching label");
+	board->addChild(label);
+	
+}
+
+void MenuScene::update(float delta)
+{
+	time += delta;
+	if (state == "matching")
+	{
+		std::string dot;
+		int num = (int)time;
+		for (int i  = 0; i < num % 5; i++) dot += ".";
+		((Label*)this->getChildByName("matching board")->getChildByName("matching label"))->setString("Matching" + dot);
+	}
+}
+
+void MenuScene::run_1v1_PvP(int id, bool move_first)
+{
+	auto game = (Game2P_PvP *)Game2P_PvP::createScene();
+	game->set_opponent_info(id, !move_first);
+	Director::getInstance()->replaceScene(game);
 }

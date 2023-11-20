@@ -1,5 +1,4 @@
 #include "Game2P_AI.h"
-#include "Socket.h"
 #include "MenuScene.h"
 #include "AudioEngine.h"
 #include "Minimax.h"
@@ -553,7 +552,7 @@ void Game2P::showResult()
 
 	auto size = Director::getInstance()->getVisibleSize();
 
-	auto result_table = Sprite::create();
+	auto result_table = Sprite::create("Assets/MenuScene/board.png");
 	result_table->setTextureRect(Rect(0, 0, 400, 300));
 	result_table->setPosition(size.width / 2, size.height / 2);
 	this->addChild(result_table);

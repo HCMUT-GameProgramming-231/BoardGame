@@ -14,7 +14,7 @@ public:
     void send(const std::string& message);
     void disconnect();
     virtual void onConnect(SIOClient* client) {}
-    virtual void onMessage(SIOClient* client, const std::string& data) {}
+    virtual void onMessage(SIOClient* client, const std::string& data);
     virtual void onClose(SIOClient* client) {}
     virtual void onError(SIOClient* client, const std::string& data) {}
 private:
@@ -23,3 +23,4 @@ private:
     SIOClient* socket;
 };
 
+std::vector<std::string> split(std::string str);
